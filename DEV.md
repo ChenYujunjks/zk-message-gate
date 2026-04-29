@@ -270,3 +270,76 @@ ZK is about proving correctness off-chain
 ```
 
 Solidity only enforces it.
+
+---
+
+## ⚠️ messageHash Match Does Not Mean Proof Match
+
+A common confusion:
+
+```text
+computeMessageHash("gm zk world") matches input.json.messageHash
+```
+
+This only proves:
+
+```text
+JS hash logic == Solidity hash logic
+```
+
+It does **not** prove that the zk proof is valid.
+
+There are three separate layers:
+
+```text
+1. messageHash
+   Generated from the message text
+
+2. proof
+   Generated from witness + zkey
+
+3. Verifier.sol
+   Exported from the same zkey
+```
+
+For on-chain verification to succeed:
+
+```text
+proof must match the exact Verifier.sol generated from the same zkey
+```
+
+Even if `messageHash` is correct, verification will fail if:
+
+```text
+- Verifier.sol was exported from an old zkey
+- proof was generated from a different zkey
+- circuit was changed but verifier was not regenerated
+```
+
+Correct workflow:
+
+```bash
+node scripts/05_prove.js
+node scripts/06_verify.js
+node scripts/07_export_verifier.js
+```
+
+Then copy the newly exported:
+
+```text
+contracts/Groth16Verifier.sol
+```
+
+to Remix and redeploy both:
+
+```text
+1. Groth16Verifier
+2. ZKMessage / MyContract
+```
+
+Debug rule:
+
+```text
+If computeMessageHash matches but verifyProof returns false,
+the problem is usually proof/verifier mismatch, not messageHash.
+```
