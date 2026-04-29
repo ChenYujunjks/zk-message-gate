@@ -1,0 +1,26 @@
+# Node
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build outputs (⚠️ 很重要)
+build/
+*.r1cs
+*.wasm
+*.sym
+*.zkey
+*.wtns
+
+# Powers of Tau (很大，不要提交)
+*.ptau
+
+# Proof outputs（可选，看你需求）
+build/*.json
+!build/merkle_public.json
+!build/merkle_proof.json
+
+# OS
+.DS_Store
+
+# Logs
+*.log
