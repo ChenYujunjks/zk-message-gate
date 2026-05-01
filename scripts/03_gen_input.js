@@ -39,7 +39,7 @@ async function main() {
   const pathElements = [leaves[3], level1[0], level2[1]];
   const pathIndices = ["0", "1", "0"];
 
-  const messageText = "gm zk world";
+  const messageText = "hello from chicago";
   const messageHash = sha256ToField(messageText);
 
   const nullifier = "9002";
