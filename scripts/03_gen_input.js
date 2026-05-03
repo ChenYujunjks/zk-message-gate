@@ -15,12 +15,16 @@ async function main() {
   const poseidon = await buildPoseidon();
   const F = poseidon.F;
 
-  const hash1 = (x) =>
-    F.toObject(poseidon([BigInt(x)])).toString();
-  const hash2 = (a, b) =>
-    F.toObject(poseidon([BigInt(a), BigInt(b)])).toString();
+  const hash1 = (x) => {
+    return F.toObject(poseidon([BigInt(x)])).toString();
+  };
 
-  // Each member gets a secret off-chain; admin only puts identityCommitment = Poseidon(secret) in the tree.
+  const hash2 = (a, b) => {
+    return F.toObject(poseidon([BigInt(a), BigInt(b)])).toString();
+  };
+
+  // Each member owns an identitySecret off-chain.
+  // Admin only puts identityCommitment = Poseidon(identitySecret) into the Merkle tree.
   const identitySecrets = [
     "10001",
     "10002",
@@ -31,9 +35,11 @@ async function main() {
     "10007",
     "10008",
   ];
+
   const memberIndex = 2;
   const identitySecret = identitySecrets[memberIndex];
 
+  // leaves = Poseidon(identitySecret)
   const leaves = identitySecrets.map((s) => hash1(s));
 
   const level1 = [
@@ -50,20 +56,26 @@ async function main() {
 
   const root = hash2(level2[0], level2[1]);
 
+  // memberIndex = 2
+  // leaf = leaves[2]
+  // sibling path:
+  // depth 0: leaves[3]
+  // depth 1: level1[0]
+  // depth 2: level2[1]
   const pathElements = [leaves[3], level1[0], level2[1]];
   const pathIndices = ["0", "1", "0"];
 
   const messageText = "hello from chicago";
   const messageHash = sha256ToField(messageText);
 
-  const nullifier = "9002";
-  const nullifierHash = hash2(nullifier, messageHash);
+  // Second version:
+  // nullifierHash = Poseidon(identitySecret, messageHash)
+  const nullifierHash = hash2(identitySecret, messageHash);
 
   const input = {
     identitySecret,
     pathElements,
     pathIndices,
-    nullifier,
     root,
     messageHash,
     nullifierHash,
@@ -73,6 +85,7 @@ async function main() {
 
   console.log("Wrote input.json");
   console.log("messageText:", messageText);
+  console.log("identitySecret:", identitySecret);
   console.log("root:", root);
   console.log("messageHash:", messageHash);
   console.log("nullifierHash:", nullifierHash);

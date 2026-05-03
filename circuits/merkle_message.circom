@@ -2,17 +2,23 @@ pragma circom 2.0.0;
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
-// Whitelist leaf on-chain / in Merkle tree MUST be Poseidon(identitySecret) (same as circomlib Poseidon(1)).
+// Whitelist leaf in Merkle tree MUST be:
+// leaf = Poseidon(identitySecret)
+//
+// nullifierHash is derived as:
+// nullifierHash = Poseidon(identitySecret, messageHash)
 template MerkleMessageGate(depth) {
+    // private inputs
     signal input identitySecret;
     signal input pathElements[depth];
     signal input pathIndices[depth];
-    signal input nullifier;
 
+    // public inputs
     signal input root;
     signal input messageHash;
     signal input nullifierHash;
 
+    // leaf = Poseidon(identitySecret)
     component leafHasher = Poseidon(1);
     leafHasher.inputs[0] <== identitySecret;
 
@@ -24,6 +30,7 @@ template MerkleMessageGate(depth) {
     signal right[depth];
 
     for (var i = 0; i < depth; i++) {
+        // pathIndices[i] must be 0 or 1
         pathIndices[i] * (pathIndices[i] - 1) === 0;
 
         left[i] <== level[i] + pathIndices[i] * (pathElements[i] - level[i]);
@@ -36,10 +43,12 @@ template MerkleMessageGate(depth) {
         level[i + 1] <== h[i].out;
     }
 
+    // Check Merkle root
     root === level[depth];
 
+    // nullifierHash = Poseidon(identitySecret, messageHash)
     component nHash = Poseidon(2);
-    nHash.inputs[0] <== nullifier;
+    nHash.inputs[0] <== identitySecret;
     nHash.inputs[1] <== messageHash;
 
     nullifierHash === nHash.out;
