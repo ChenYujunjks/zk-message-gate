@@ -15,12 +15,26 @@ async function main() {
   const poseidon = await buildPoseidon();
   const F = poseidon.F;
 
-  const leaves = ["100", "101", "102", "103", "104", "105", "106", "107"];
-  const index = 2;
-  const leaf = leaves[index];
-
+  const hash1 = (x) =>
+    F.toObject(poseidon([BigInt(x)])).toString();
   const hash2 = (a, b) =>
     F.toObject(poseidon([BigInt(a), BigInt(b)])).toString();
+
+  // Each member gets a secret off-chain; admin only puts identityCommitment = Poseidon(secret) in the tree.
+  const identitySecrets = [
+    "10001",
+    "10002",
+    "10003",
+    "10004",
+    "10005",
+    "10006",
+    "10007",
+    "10008",
+  ];
+  const memberIndex = 2;
+  const identitySecret = identitySecrets[memberIndex];
+
+  const leaves = identitySecrets.map((s) => hash1(s));
 
   const level1 = [
     hash2(leaves[0], leaves[1]),
@@ -46,7 +60,7 @@ async function main() {
   const nullifierHash = hash2(nullifier, messageHash);
 
   const input = {
-    leaf,
+    identitySecret,
     pathElements,
     pathIndices,
     nullifier,

@@ -2,8 +2,9 @@ pragma circom 2.0.0;
 
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
+// Whitelist leaf on-chain / in Merkle tree MUST be Poseidon(identitySecret) (same as circomlib Poseidon(1)).
 template MerkleMessageGate(depth) {
-    signal input leaf;
+    signal input identitySecret;
     signal input pathElements[depth];
     signal input pathIndices[depth];
     signal input nullifier;
@@ -12,8 +13,11 @@ template MerkleMessageGate(depth) {
     signal input messageHash;
     signal input nullifierHash;
 
+    component leafHasher = Poseidon(1);
+    leafHasher.inputs[0] <== identitySecret;
+
     signal level[depth + 1];
-    level[0] <== leaf;
+    level[0] <== leafHasher.out;
 
     component h[depth];
     signal left[depth];
